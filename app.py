@@ -13,23 +13,23 @@ def fetch_poster(movie_id):
     full_path = "https://image.tmdb.org/t/p/w500/" + poster_path
     return full_path
 
-# Function to load the similarity matrix (download if not already present)
-@st.cache_resource
+# Function to download and load the similarity matrix
 def load_similarity_matrix():
     file_path = "similarity.pkl"
-    # Check if the file exists
+    
+    # Check if the similarity matrix file exists
     if not os.path.exists(file_path):
         # Your file ID (replace this with your actual file ID)
         url = 'https://drive.google.com/uc?id=1qGV37AwoOQPSIKe_nWMIxfAQD9-BgVAa'
-        gdown.download(url, file_path, quiet=False)
+        gdown.download(url, file_path, quiet=False)  # Download the file if not present
 
-    # Load the similarity matrix from the file
+    # Load the similarity matrix
     with open(file_path, 'rb') as f:
         similarity = pickle.load(f)
 
     return similarity
 
-# Load the similarity matrix
+# Load the similarity matrix (directly calling the function)
 similarity = load_similarity_matrix()
 
 # Function to recommend movies based on similarity matrix
