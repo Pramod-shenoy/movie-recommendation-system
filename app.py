@@ -1,52 +1,43 @@
-import pickle
 import streamlit as st
 import requests
-import os
 import gdown
-
+import pickle
+import os
 
 # Function to fetch movie poster
 def fetch_poster(movie_id):
-    try:
-        url = "https://api.themoviedb.org/3/movie/{}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US".format(
-            movie_id)
-        data = requests.get(url)
-        data = data.json()
-        poster_path = data.get('poster_path')
-        if poster_path:
-            full_path = "https://image.tmdb.org/t/p/w500/" + poster_path
-            return full_path
-        else:
-            return "https://via.placeholder.com/500x750?text=No+Poster+Available"
-    except Exception as e:
-        return "https://via.placeholder.com/500x750?text=Error+Fetching+Poster"
+    url = "https://api.themoviedb.org/3/movie/{}?api_key=8265bd1679663a7ea12ac168da84d2e8&language=en-US".format(movie_id)
+    data = requests.get(url)
+    data = data.json()
+    poster_path = data['poster_path']
+    full_path = "https://image.tmdb.org/t/p/w500/" + poster_path
+    return full_path
 
-
-# Function to download and load the similarity matrix from Google Drive
+# Function to load the similarity matrix (download if not already present)
 @st.cache_resource
 def load_similarity_matrix():
     file_path = "similarity.pkl"
-
-    # Check if the file exists locally
+    # Check if the file exists
     if not os.path.exists(file_path):
-        # URL to your Google Drive file (replace with your actual file ID)
+        # Your file ID (replace this with your actual file ID)
         url = 'https://drive.google.com/uc?id=1qGV37AwoOQPSIKe_nWMIxfAQD9-BgVAa'
         gdown.download(url, file_path, quiet=False)
 
-    # Load the similarity matrix from the local file
+    # Load the similarity matrix from the file
     with open(file_path, 'rb') as f:
         similarity = pickle.load(f)
 
     return similarity
 
+# Load the similarity matrix
+similarity = load_similarity_matrix()
 
-# Function to recommend movies
+# Function to recommend movies based on similarity matrix
 def recommend(movie):
     index = movies[movies['title'] == movie].index[0]
     distances = sorted(list(enumerate(similarity[index])), reverse=True, key=lambda x: x[1])
     recommended_movie_names = []
     recommended_movie_posters = []
-
     for i in distances[1:6]:
         movie_id = movies.iloc[i[0]].movie_id
         recommended_movie_posters.append(fetch_poster(movie_id))
@@ -54,28 +45,25 @@ def recommend(movie):
 
     return recommended_movie_names, recommended_movie_posters
 
-
-# Streamlit UI
+# Your main Streamlit app code
 st.header('Movie Recommender System')
 
-# Load movie list (Assuming you already have movie_list.pkl or a similar file)
+# Assuming the movie data is loaded elsewhere in your app, like this:
 movies = pickle.load(open('movie_list.pkl', 'rb'))
 
-# Load the similarity matrix using the function
-similarity = load_similarity_matrix()
-
-# Movie list dropdown
+# Dropdown for movie selection
 movie_list = movies['title'].values
 selected_movie = st.selectbox(
     "Type or select a movie from the dropdown",
     movie_list
 )
 
+# Show recommendations when button is clicked
 if st.button('Show Recommendation'):
     recommended_movie_names, recommended_movie_posters = recommend(selected_movie)
-
+    
+    # Display the recommended movies
     col1, col2, col3, col4, col5 = st.columns(5)
-
     with col1:
         st.text(recommended_movie_names[0])
         st.image(recommended_movie_posters[0])
