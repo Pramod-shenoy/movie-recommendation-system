@@ -15,12 +15,13 @@ def fetch_poster(movie_id):
 
 # Function to download and load the similarity matrix
 def load_similarity_matrix():
-    file_path = "similarity.pkl"
+    # Use Streamlit Cloud's temporary directory to store files
+    file_path = '/tmp/similarity.pkl'  # Temporary file path in the Cloud
     
     # Check if the similarity matrix file exists
     if not os.path.exists(file_path):
         # Your file ID (replace this with your actual file ID)
-        url = 'https://drive.google.com/uc?id=1qGV37AwoOQPSIKe_nWMIxfAQD9-BgVAa'
+        url = 'https://drive.google.com/uc?id=1qGV37AwoOQPSIKe_nWMIxfAQD9-BgVAa'  # Google Drive link
         gdown.download(url, file_path, quiet=False)  # Download the file if not present
 
     # Load the similarity matrix
@@ -28,9 +29,6 @@ def load_similarity_matrix():
         similarity = pickle.load(f)
 
     return similarity
-
-# Load the similarity matrix (directly calling the function)
-similarity = load_similarity_matrix()
 
 # Function to recommend movies based on similarity matrix
 def recommend(movie):
@@ -44,6 +42,9 @@ def recommend(movie):
         recommended_movie_names.append(movies.iloc[i[0]].title)
 
     return recommended_movie_names, recommended_movie_posters
+
+# Load the similarity matrix (directly calling the function)
+similarity = load_similarity_matrix()
 
 # Your main Streamlit app code
 st.header('Movie Recommender System')
@@ -62,8 +63,9 @@ selected_movie = st.selectbox(
 if st.button('Show Recommendation'):
     recommended_movie_names, recommended_movie_posters = recommend(selected_movie)
     
-    # Display the recommended movies
+    # Display recommendations in columns
     col1, col2, col3, col4, col5 = st.columns(5)
+    
     with col1:
         st.text(recommended_movie_names[0])
         st.image(recommended_movie_posters[0])
